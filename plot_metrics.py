@@ -1,14 +1,15 @@
 import subprocess
 import matplotlib.pyplot as plt
+import matplotlib.ticker as ticker # Импортируем модуль для кастомных осей
 import sys
 
 # ГЛОБАЛЬНЫЙ ПАРАМЕТР: список кешей для тестирования
 CACHES_TO_TEST = ["lru", "lfu"]
+TEST_PATH = "Datasets/2_twitter/cluster001-parsed.txt"
 
 def run_cpp_benchmark(executable_path, cache_name, dataset_path):
     print(f"Запускаем {executable_path} для кеша {cache_name.upper()}...")
     try:
-        # Передаем аргументы в C++ программу
         result = subprocess.run(
             [executable_path, cache_name, dataset_path],
             capture_output=True, text=True, check=True
@@ -24,34 +25,40 @@ def run_cpp_benchmark(executable_path, cache_name, dataset_path):
 
 def parse_output(output):
     sizes = []
+    fractions = []
     accuracies = []
     for line in output.strip().split('\n'):
         parts = line.split('\t')
-        if len(parts) == 2:
+        if len(parts) == 3:
             try:
                 sizes.append(int(parts[0]))
-                accuracies.append(float(parts[1]))
+                fractions.append(float(parts[1]))
+                accuracies.append(float(parts[2]))
             except ValueError:
                 continue
-    return sizes, accuracies
+    return sizes, fractions, accuracies
 
 def main():
     executable_path = "./cmake-build-debug/Cache"
-    # Убедитесь, что путь к датасету правильный
-    test_file = "Datasets/1_synthetic/sample1.txt"
+    test_file = TEST_PATH
 
     all_results = {}
-    max_size_overall = 0
+    longest_fractions = [] # Эталонный массив X для дополнения коротких графиков
 
     # 1. Собираем данные для всех кешей
     for cache_name in CACHES_TO_TEST:
         output = run_cpp_benchmark(executable_path, cache_name, test_file)
-        sizes, accuracies = parse_output(output)
+        sizes, fractions, accuracies = parse_output(output)
 
-        if sizes:
-            all_results[cache_name] = (sizes, accuracies)
-            # Запоминаем максимальный размер по оси X среди всех кешей
-            max_size_overall = max(max_size_overall, sizes[-1])
+        if fractions:
+            all_results[cache_name] = {
+                'sizes': sizes,
+                'fractions': fractions,
+                'accuracies': accuracies
+            }
+            # Ищем самый длинный массив fractions (тот кеш, что работал дольше всех)
+            if len(fractions) > len(longest_fractions):
+                longest_fractions = fractions
         else:
             print(f"Предупреждение: Нет данных для кеша {cache_name}")
 
@@ -59,46 +66,66 @@ def main():
         print("Нет данных для построения графика.")
         return
 
-    # 2. Строим график
-    plt.figure(figsize=(10, 6))
+    # Вычисляем общее количество ключей в датасете (нужно для оси X)
+    # Берем из первого попавшегося кеша формулу: total_keys = size / fraction
+    first_cache = list(all_results.values())[0]
+    total_keys = int(first_cache['sizes'][-1] / first_cache['fractions'][-1]) if first_cache['fractions'][-1] > 0 else 1
 
-    # Набор цветов для разных линий
+    # 2. Строим график
+    fig, ax = plt.subplots(figsize=(10, 6))
     colors = ['b', 'g', 'r', 'c', 'm', 'y', 'k']
 
     for i, cache_name in enumerate(CACHES_TO_TEST):
         if cache_name not in all_results:
             continue
 
-        sizes, accuracies = all_results[cache_name]
+        res = all_results[cache_name]
+        fracs = res['fractions']
+        accs = res['accuracies']
 
-        # ЛОГИКА НАСЫЩЕНИЯ:
-        # Если этот кеш достиг 100% раньше других, добиваем его массивы
-        # последним значением (1.0) вплоть до max_size_overall
-        last_size = sizes[-1]
-        last_accuracy = accuracies[-1]
+        # ИСПРАВЛЕННАЯ ЛОГИКА НАСЫЩЕНИЯ:
+        # Если этот кеш остановился раньше, добиваем его массив X значениями из longest_fractions,
+        # а массив Y - последним известным значением точности (или 1.0)
+        if len(fracs) < len(longest_fractions):
+            start_idx = len(fracs)
+            fracs.extend(longest_fractions[start_idx:])
 
-        if last_size < max_size_overall:
-            for s in range(last_size + 1, max_size_overall + 1):
-                sizes.append(s)
-                accuracies.append(last_accuracy)
+            last_acc = accs[-1] if accs else 1.0
+            accs.extend([last_acc] * (len(longest_fractions) - start_idx))
 
         # Рисуем линию
-        plt.plot(
-            sizes, accuracies,
+        ax.plot(
+            fracs, accs,
             marker='o', markersize=4, linestyle='-',
             color=colors[i % len(colors)],
             label=f'{cache_name.upper()} Cache'
         )
 
     # 3. Настраиваем внешний вид
-    plt.title('Зависимость точности кешей от их размера', fontsize=14)
-    plt.xlabel('Размер кеша (Cache Size)', fontsize=12)
-    plt.ylabel('Точность (Accuracy)', fontsize=12)
-    plt.grid(True, linestyle='--', alpha=0.7)
-    plt.ylim(0, 1.05)
-    plt.legend()
+    ax.set_title('Зависимость точности кешей от их размера', fontsize=14)
+    ax.set_ylabel('Точность (Accuracy)', fontsize=12)
+    ax.set_xlabel('Размер кеша: % от датасета\n(фактическое количество элементов)', fontsize=12)
+    ax.grid(True, linestyle='--', alpha=0.7)
+    ax.set_ylim(0, 1.05)
+    ax.legend()
 
-    # 4. Сохраняем и показываем
+    # =================================================================
+    # 4. МАГИЯ ДЛЯ ОСИ X: Кастомное форматирование подписей
+    # =================================================================
+    def custom_x_formatter(x, pos):
+        # x - это значение на оси (в нашем случае fraction, от 0.0 до 1.0)
+        percent = x * 100
+        actual_size = int(x * total_keys)
+        # Возвращаем строку с переносом строки \n
+        return f"{percent:.1f}%\n({actual_size})"
+
+    # Применяем наш форматер к оси X
+    ax.xaxis.set_major_formatter(ticker.FuncFormatter(custom_x_formatter))
+
+    # Немного увеличиваем отступ снизу, чтобы двойные подписи (с \n) не обрезались
+    plt.subplots_adjust(bottom=0.15)
+
+    # 5. Сохраняем и показываем
     plt.savefig('cache_accuracy_plot.png', dpi=300, bbox_inches='tight')
     print("График успешно сохранен в файл 'cache_accuracy_plot.png'")
     plt.show()

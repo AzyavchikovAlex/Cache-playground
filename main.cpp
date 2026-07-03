@@ -6,6 +6,10 @@
 #include "Datasets/dataset_parser.h"
 #include "metrics.h"
 
+const double kMaxCacheFraction = 0.05;
+const size_t kMaxCacheSize = 5'000;
+const double kSizeMultiplier = 1.5;
+
 int main(int argc, char* argv[]) {
   if (argc <= 2) {
     throw std::runtime_error{"Too few arguments"};
@@ -19,8 +23,11 @@ int main(int argc, char* argv[]) {
   }
 
   auto dataset = ParseDataset(dataset_path);
+  size_t dataset_size = GetDatasetSize(dataset);
 
-  for (size_t size = 1; size < 100; ++size) {
+  for (size_t size = 1;
+       size < kMaxCacheSize;
+       size = std::max(size + 1, size_t(double(size) * kSizeMultiplier))) {
 
     auto cache_factory = [size, &cache_name]<typename T>() -> AnyCache {
       if (cache_name == "lru") {
@@ -33,10 +40,12 @@ int main(int argc, char* argv[]) {
     };
 
     auto m = MeasureCache(dataset, cache_factory);
+    double cache_fraction = double(size) / double(dataset_size);
     auto accuracy = m.GetAccuracy();
-    std::cout << size << "\t" << accuracy << "\n";
+    std::cout << size << "\t" << cache_fraction << "\t" << accuracy << "\n";
 
-    if (std::abs(accuracy - 1) < 0.000001) {
+    if (std::abs(accuracy - 1) < 0.000001 ||
+        cache_fraction >= kMaxCacheFraction) {
       break;
     }
   }

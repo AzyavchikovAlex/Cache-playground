@@ -25,6 +25,15 @@ Dataset<T> ReadDataset(std::ifstream& in, size_t size) {
 
 }
 
+
+size_t GetDatasetSize(const AnyDataset& any_dataset) {
+  size_t size = 0;
+  std::visit([&size](const auto& dataset) -> void {
+    size = dataset.keys.size();
+  }, any_dataset);
+  return size;
+}
+
 AnyDataset ParseDataset(const std::string& path_str) {
   std::filesystem::path path(path_str);
   if (!std::filesystem::exists(path)) {
