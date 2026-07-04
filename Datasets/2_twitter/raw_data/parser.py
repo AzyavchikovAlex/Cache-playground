@@ -11,6 +11,8 @@ def convert_twitter_trace(input_csv, output_txt, max_requests=None):
     keys = []
 
     print(f"Чтение данных из {input_csv}...")
+    seen_keys = {}
+    new_key_index = 0;
     with open(input_csv, 'r') as f:
         reader = csv.reader(f)
         for row in reader:
@@ -18,6 +20,13 @@ def convert_twitter_trace(input_csv, output_txt, max_requests=None):
                 continue
 
             key = row[1]
+            # convert large string to integer
+            if key not in seen_keys:
+                seen_keys[key] = new_key_index
+                key = new_key_index
+                new_key_index += 1
+            else:
+                key = seen_keys[key]
             operation = row[5]
 
             # Для тестирования кеша нас обычно интересуют запросы на чтение
@@ -32,7 +41,7 @@ def convert_twitter_trace(input_csv, output_txt, max_requests=None):
 
     with open(output_txt, 'w') as f:
         # Записываем заголовок, который ожидает ваш C++ код (ParseDataset)
-        f.write(f"string {len(keys)}\n")
+        f.write(f"int {len(keys)}\n")
 
         # Записываем сами ключи
         for key in keys:
