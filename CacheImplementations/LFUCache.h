@@ -35,7 +35,7 @@ class LFUCache : public Cache<K> {
   ~LFUCache() override = default;
 
   void Insert(const K& key) override {
-    if (IsPresent(key)) {
+    if (Contains(key)) {
       return;
     }
     if (queue_.size() >= size_) {
@@ -51,6 +51,12 @@ class LFUCache : public Cache<K> {
     queue_.insert({info, key});
   }
 
+  K EraseLeastFrequentlyUsed() {
+    auto [info, key_to_erase] = *queue_.begin();
+    EraseInternal(key_to_erase);
+    return key_to_erase;
+  }
+
   void Touch(const K& key) override {
     auto info_it = keys_info.find(key);
     assert(info_it != keys_info.end());
@@ -60,7 +66,7 @@ class LFUCache : public Cache<K> {
     queue_.insert({info_it->second, key});
   }
 
-  bool IsPresent(const K& key) const override {
+  bool Contains(const K& key) const override {
     return keys_info.contains(key);
   }
 };

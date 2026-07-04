@@ -30,7 +30,7 @@ def convert_twitter_trace(input_csv, output_txt, max_requests=None):
             operation = row[5]
 
             # Для тестирования кеша нас обычно интересуют запросы на чтение
-            if operation in ('get', 'gets'):
+            if operation in ('get', 'gets', 'set'):
                 keys.append(key)
 
             # Ограничиваем размер датасета, если нужно

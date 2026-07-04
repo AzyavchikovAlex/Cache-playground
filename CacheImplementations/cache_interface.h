@@ -12,7 +12,7 @@ class Cache {
 
   virtual void Insert(const K& key) = 0;
   virtual void Touch(const K& key) = 0;
-  [[nodiscard]] virtual bool IsPresent(const K& key) const = 0;
+  [[nodiscard]] virtual bool Contains(const K& key) const = 0;
 };
 
 using AnyCache = std::variant<

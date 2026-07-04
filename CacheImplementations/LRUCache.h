@@ -1,7 +1,9 @@
 #pragma once
 
 #include <cassert>
-#include <set>
+#include <format>
+#include <list>
+#include <stdexcept>
 #include <unordered_map>
 
 #include "cache_interface.h"
@@ -10,16 +12,21 @@
 template<typename K>
 class LRUCache : public Cache<K> {
  private:
+  std::unordered_map<K, typename std::list<K>::iterator> keys_positions_;
+  std::list<K> sorted_keys_;
   size_t size_;
-  int64_t timestamp_{0};
-  std::unordered_map<K, int64_t> keys_timestamps; // key -> time
-  std::set<std::pair<int64_t, K>> queue_; // timestamp, key
 
-  void EraseInternal(const K& key) {
-    auto time_it = keys_timestamps.find(key);
-    assert(time_it != keys_timestamps.end());
-    queue_.erase({time_it->second, key});
-    keys_timestamps.erase(time_it);
+  void EraseInternal(std::unordered_map<K, typename std::list<K>::iterator>::iterator it) {
+    if (it == keys_positions_.end()) {
+      throw std::runtime_error{"Invalid iterator in erase function"};
+    }
+    sorted_keys_.erase(it->second);
+    keys_positions_.erase(it);
+  }
+
+  void TouchKeyInternal(std::unordered_map<K, typename std::list<K>::iterator>::iterator it) {
+    auto list_it = it->second;
+    sorted_keys_.splice(sorted_keys_.begin(), sorted_keys_, list_it); // move to front
   }
 
  public:
@@ -29,28 +36,37 @@ class LRUCache : public Cache<K> {
   ~LRUCache() override = default;
 
   void Insert(const K& key) override {
-    if (IsPresent(key)) {
+    if (auto it = keys_positions_.find(key); it != keys_positions_.end()) {
+      TouchKeyInternal(it);
       return;
     }
-    if (queue_.size() >= size_) {
-      auto [timestamp, key_to_erase] = *queue_.begin();
-      EraseInternal(key_to_erase);
+
+    if (sorted_keys_.size() >= size_) {
+      const auto& key_to_erase = *sorted_keys_.rbegin();
+      EraseInternal(keys_positions_.find(key_to_erase));
     }
 
-    int64_t key_timestamp = timestamp_++;
-    keys_timestamps[key] = key_timestamp;
-    queue_.insert({key_timestamp, key});
+    sorted_keys_.push_front(key);
+    keys_positions_[key] = sorted_keys_.begin();
+  }
+
+  bool Erase(const K& key) {
+    if (auto it = keys_positions_.find(key); it != keys_positions_.end()) {
+      EraseInternal(it);
+      return true;
+    }
+    return false;
   }
 
   void Touch(const K& key) override {
-    auto time_it = keys_timestamps.find(key);
-    assert(time_it != keys_timestamps.end());
-    queue_.erase({time_it->second, key});
-    time_it->second = timestamp_++;
-    queue_.insert({time_it->second, key});
+    if (auto it = keys_positions_.find(key); it != keys_positions_.end()) {
+      TouchKeyInternal(it);
+    } else {
+      throw std::runtime_error{std::format("Key ({}) is not present", key)};
+    }
   }
 
-  bool IsPresent(const K& key) const override {
-    return keys_timestamps.contains(key);
+  bool Contains(const K& key) const override {
+    return keys_positions_.contains(key);
   }
 };

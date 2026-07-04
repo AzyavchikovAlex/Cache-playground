@@ -38,7 +38,7 @@ CacheMetrics MeasureCache(const AnyDataset& any_dataset,
             perfect_cache.insert(key);
           }
 
-          if (cache->IsPresent(key)) {
+          if (cache->Contains(key)) {
             cache->Touch(key);
           } else {
             metrics.cache_misses += 1;
