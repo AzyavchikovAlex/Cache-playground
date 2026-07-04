@@ -30,17 +30,40 @@ class LFUCache : public Cache<K> {
 
  public:
   explicit LFUCache(size_t size) : size_(size) {
+    if (size == 0) {
+      throw std::runtime_error{"Zero size for LFU cache is invalid"};
+    }
   }
 
   ~LFUCache() override = default;
 
+  K EvictKey() {
+    auto [info, key_to_erase] = *queue_.begin();
+    EraseInternal(key_to_erase);
+    return key_to_erase;
+  }
+
+  [[nodiscard]] size_t Size() const {
+    return queue_.size();
+  }
+
+  void Resize(size_t new_size) {
+    if (new_size == 0) {
+      throw std::runtime_error{"Zero new_size for LFU cache is invalid"};
+    }
+    while (queue_.size() > new_size) {
+      EvictKey();
+    }
+    size_ = new_size;
+  }
+
   void Insert(const K& key) override {
     if (Contains(key)) {
+      Touch(key);
       return;
     }
     if (queue_.size() >= size_) {
-      auto [info, key_to_erase] = *queue_.begin();
-      EraseInternal(key_to_erase);
+      EvictKey();
     }
 
     KeyInfo info{
@@ -51,11 +74,6 @@ class LFUCache : public Cache<K> {
     queue_.insert({info, key});
   }
 
-  K EraseLeastFrequentlyUsed() {
-    auto [info, key_to_erase] = *queue_.begin();
-    EraseInternal(key_to_erase);
-    return key_to_erase;
-  }
 
   void Touch(const K& key) override {
     auto info_it = keys_info.find(key);

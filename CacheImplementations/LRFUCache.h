@@ -26,7 +26,7 @@ class LRFUCache : public Cache<K> {
       lfu_cache_.Touch(key);
     } else if (lru_cache_.Contains(key)) {
       lru_cache_.Erase(key);
-      auto erased_key = lfu_cache_.EraseLeastFrequentlyUsed();
+      auto erased_key = lfu_cache_.EvictKey();
       lfu_cache_.Insert(key);
       lru_cache_.Insert(erased_key);
     } else {

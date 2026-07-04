@@ -10,9 +10,12 @@ struct CacheMetrics {
   int cache_misses{0};
   int unique_keys_count{0};
 
-  double GetAccuracy() const {
+  [[nodiscard]] double GetAccuracy() const {
     double not_unique_requests_count = requests_count - unique_keys_count;
     double not_unique_cache_misses_count = cache_misses - unique_keys_count;
+    if (not_unique_requests_count == 0.0) {
+      return 1.0;
+    }
     return (not_unique_requests_count - not_unique_cache_misses_count)
         / not_unique_requests_count;
   }

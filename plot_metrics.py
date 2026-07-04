@@ -4,8 +4,8 @@ import matplotlib.ticker as ticker # Импортируем модуль для 
 import sys
 
 # ГЛОБАЛЬНЫЙ ПАРАМЕТР: список кешей для тестирования
-CACHES_TO_TEST = ["lru", "lfu", "lrfu"]
-TEST_PATH = "Datasets/2_twitter/cluster005-parsed.txt"
+CACHES_TO_TEST = ["lru", "lfu", "lrfu", "arc"]
+TEST_PATH = "Datasets/2_twitter/cluster001-parsed.txt"
 
 def run_cpp_benchmark(executable_path, cache_name, dataset_path):
     print(f"Запускаем {executable_path} для кеша {cache_name.upper()}...")
