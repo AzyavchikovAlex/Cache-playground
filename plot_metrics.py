@@ -6,7 +6,7 @@ import matplotlib.pyplot as plt
 import matplotlib.ticker as ticker
 
 # список кешей для тестирования
-CACHES_TO_TEST = ["lru", "lfu", "lrfu", "arc"]
+CACHES_TO_TEST = ["lru", "lfu", "lrfu", "arc", "lirs"]
 
 CACHE_COLORS = {
     "lru": "#1f77b4",   # Синий
