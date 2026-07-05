@@ -12,4 +12,7 @@ add_executable(Cache
         Datasets/dataset.h
         CacheImplementations/cache_interface.h
         CacheImplementations/LRUCache.h
+        CacheImplementations/LFUCache.h
+        CacheImplementations/adaptive_replacement_cache.h
+        CacheImplementations/LIRSCache.h
 )

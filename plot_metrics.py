@@ -12,13 +12,15 @@ CACHE_COLORS = {
     "lru": "#1f77b4",   # Синий
     "lfu": "#2ca02c",   # Зеленый
     "lrfu": "#d62728",  # Красный
-    "arc": "#9467bd"    # Фиолетовый
+    "arc": "#9467bd",    # Фиолетовый
+    "lirs": "#ff7f0e"   # Оранжевый
 }
 DEFAULT_COLOR = "#7f7f7f"
 
 # ГЛОБАЛЬНЫЕ ПАРАМЕТРЫ СТИЛЯ ГРАФИКА
 LINE_WIDTH = 0.7  # Толщина линий
 MARKER_SIZE = 2.8  # Размер точек
+ZOOMED_PART = 1 / 10
 
 
 def parse_arguments():
@@ -124,7 +126,7 @@ def main():
 
     # Вычисляем максимальное значение по оси X среди всех доступных данных
     max_x_value = max([max(res["fractions"]) for res in all_results.values() if res["fractions"]])
-    X_MAX_ZOOM = max_x_value / 12
+    X_MAX_ZOOM = max_x_value * ZOOMED_PART
 
     # Вычисляем максимальное значение Accuracy для правильного масштабирования осей
     max_accuracy = max([max(res["accuracies"]) for res in all_results.values() if res["accuracies"]])
