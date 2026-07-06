@@ -43,3 +43,4 @@
 .idea*
 
 Datasets/2_twitter/raw_data/cluster*
+.ipynb_checkpoints/
