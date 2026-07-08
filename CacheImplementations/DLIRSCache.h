@@ -10,7 +10,7 @@
 #include "cache_interface.h"
 
 template<typename K>
-class LIRSCache : public Cache<K> {
+class DLIRSCache : public Cache<K> {
  private:
   size_t max_hir_keys_count_{0};
   size_t max_lir_keys_count_{0};
@@ -18,6 +18,7 @@ class LIRSCache : public Cache<K> {
   enum class KeyState {
     LIR, // Low Inter-reference Recency
     HIR, // High Inter-reference Recency
+    HIR_FROM_LIR,
     DELETED,
   };
 
@@ -64,13 +65,30 @@ class LIRSCache : public Cache<K> {
       if (info.state == KeyState::LIR) {
         hir_queue_.push_front(key);
         info.queue_it = hir_queue_.begin();
-        info.state = KeyState::HIR;
+        info.state = KeyState::HIR_FROM_LIR;
         --lir_keys_count_;
-      } else if (info.state == KeyState::HIR) {
+      } else if (info.state == KeyState::HIR ||
+          info.state == KeyState::HIR_FROM_LIR) {
         assert(info.queue_it.has_value());
       } else if (info.state == KeyState::DELETED) {
         assert(info.queue_it == std::nullopt);
         keys_info_.erase(info_it);
+      }
+    }
+  }
+
+  void RebalanceSizes(KeyState hit_state) {
+    if (hit_state == KeyState::HIR_FROM_LIR) {
+      // inc lir stack size for more hits
+      if (max_hir_keys_count_ > 1) {
+        --max_hir_keys_count_;
+        ++max_lir_keys_count_;
+      }
+    } else if (hit_state == KeyState::DELETED) {
+      // inc hir queue for more hits (need more time for deletion)
+      if (max_lir_keys_count_ > 1) {
+        --max_lir_keys_count_;
+        ++max_hir_keys_count_;
       }
     }
   }
@@ -85,6 +103,7 @@ class LIRSCache : public Cache<K> {
       info.stack_it = lir_stack_.begin();
     }
 
+    RebalanceSizes(info.state);
 
     if (was_in_stack && info.state != KeyState::LIR) {
       info.state = KeyState::LIR;
@@ -108,7 +127,7 @@ class LIRSCache : public Cache<K> {
   }
 
  public:
-  explicit LIRSCache(size_t size) :
+  explicit DLIRSCache(size_t size) :
       max_hir_keys_count_(std::max(size_t(1), size_t(size * 0.1))),
       max_lir_keys_count_(size - max_hir_keys_count_) {
     if (size < 2) {

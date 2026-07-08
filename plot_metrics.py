@@ -8,14 +8,15 @@ import matplotlib.ticker as ticker
 
 SPLIT_FRACTION = 0.15
 
-CACHES_TO_TEST = ["lru", "lfu", "lrfu", "arc", "lirs"]
+CACHES_TO_TEST = ["lru", "lfu", "lrfu", "arc", "lirs", "dlirs"]
 
 CACHE_COLORS = {
-    "lru": "#1f77b4",   # Синий
-    "lfu": "#2ca02c",   # Зеленый
-    "lrfu": "#d62728",  # Красный
-    "arc": "#9467bd",   # Фиолетовый
-    "lirs": "#ff7f0e"   # Оранжевый
+    "lru": "#1f77b4",    # Синий
+    "lfu": "#2ca02c",    # Зеленый
+    "lrfu": "#d62728",   # Красный
+    "arc": "#9467bd",    # Фиолетовый
+    "lirs": "#ff7f0e",   # Оранжевый
+    "dlirs": "#e377c2",  # Розовый
 }
 DEFAULT_COLOR = "#7f7f7f"
 

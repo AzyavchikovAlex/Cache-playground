@@ -12,6 +12,8 @@ A project designed to analyze and visualize the performance of various caching a
 * **LRFU cache**: a hybrid LRFU cache split 50/50 between LRU and LFU segments, where a key moves to the LFU cache upon the second hit
 * **ARC cache**:  [adaptive replacement cache](https://en.wikipedia.org/wiki/Adaptive_replacement_cache)
 * **LIRS cache**: a cache based on the [Low Inter-reference Recency Set replacement policy](https://ranger.uta.edu/~sjiang/pubs/papers/jiang02_LIRS.pdf)
+* **DLIRS cache**: dynamic LIRS cache ([DLIRS: Improving Low Inter-Reference Recency Set
+  Cache Replacement Policy with Dynamics](https://www.systor.org/2018/pdf/systor18-4.pdf))
 
 ### Efficiency Metrics
 

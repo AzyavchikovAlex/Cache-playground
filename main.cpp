@@ -7,6 +7,7 @@
 #include "CacheImplementations/LRFUCache.h"
 #include "CacheImplementations/adaptive_replacement_cache.h"
 #include "CacheImplementations/LIRSCache.h"
+#include "CacheImplementations/DLIRSCache.h"
 #include "Datasets/dataset_parser.h"
 #include "metrics.h"
 
@@ -16,7 +17,7 @@ const double kSizeMultiplier = 1.5;
 const size_t kTestsCount = 30;
 
 std::unordered_set<std::string> correct_cache_names = {
-    "lru", "lfu", "lrfu", "arc", "lirs",
+    "lru", "lfu", "lrfu", "arc", "lirs", "dlirs",
 };
 
 std::vector<size_t> GenerateCacheSizes(size_t min_size, size_t max_size, size_t num_points) {
@@ -86,6 +87,8 @@ int main(int argc, char* argv[]) {
         return std::shared_ptr<ARCache<T>>(new ARCache<T>(size));
       } else if (cache_name == "lirs") {
         return std::shared_ptr<LIRSCache<T>>(new LIRSCache<T>(size));
+      } else if (cache_name == "dlirs") {
+        return std::shared_ptr<DLIRSCache<T>>(new DLIRSCache<T>(size));
       }
       throw std::runtime_error{
           std::format("Unexpected cache name {}", cache_name)};
