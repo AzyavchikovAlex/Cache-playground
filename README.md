@@ -14,12 +14,13 @@ A project designed to analyze and visualize the performance of various caching a
 * **LIRS cache**: a cache based on the [Low Inter-reference Recency Set replacement policy](https://ranger.uta.edu/~sjiang/pubs/papers/jiang02_LIRS.pdf)
 * **DLIRS cache**: dynamic LIRS cache ([DLIRS: Improving Low Inter-Reference Recency Set
   Cache Replacement Policy with Dynamics](https://www.systor.org/2018/pdf/systor18-4.pdf))
+* **OPT cache**: an offline, theoretically optimal cache algorithm used as a baseline
 
 ### Efficiency Metrics
 
-Used a modified **Miss Rate** formula that excludes compulsory misses (the first occurrence of a key):
+Used a **Accuracy** formula that excludes compulsory misses (the first occurrence of a key):
 
-$$Miss\ Rate = 1 - \frac{\text{Total Keys} - \text{Unique Keys}}{\text{Cache Misses} - \text{Unique Keys}}$$
+$$Accuracy = \frac{\text{Total Keys} - \text{Unique Keys}}{\text{Cache Misses} - \text{Unique Keys}}$$
 
 
 ---
