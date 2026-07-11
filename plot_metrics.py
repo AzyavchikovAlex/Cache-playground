@@ -5,7 +5,7 @@ import sys
 import matplotlib.pyplot as plt
 import matplotlib.ticker as ticker
 
-CACHES_TO_TEST = ["opt", "lru", "lfu", "lrfu", "arc", "lirs", "dlirs"]
+DEFAULT_CACHES = ["opt", "lru", "lfu", "lrfu", "arc", "lirs", "dlirs"]
 
 CACHE_COLORS = {
     "opt": "#404040",    # Темно-серый
@@ -38,6 +38,12 @@ def parse_arguments():
         "-p", "--plot", type=str,
         default="cache_accuracy_analysis.png",
         help="Путь для сохранения графика",
+    )
+    parser.add_argument(
+        "-c", "--caches", type=str, nargs="+",
+        default=DEFAULT_CACHES,
+        choices=DEFAULT_CACHES,
+        help=f"Список кешей для тестирования (через пробел). Доступные: {', '.join(DEFAULT_CACHES)}",
     )
     return parser.parse_args()
 
@@ -78,9 +84,15 @@ def main():
     executable_path = args.executable
     test_file = args.dataset
 
+    caches_to_test = [c.lower() for c in args.caches]
+    if "opt" not in caches_to_test:
+        caches_to_test.append("opt")
+
     all_results = {}
 
-    for cache_name in CACHES_TO_TEST:
+
+
+    for cache_name in caches_to_test:
         output = run_cpp_benchmark(executable_path, cache_name, test_file)
         sizes, fractions, accuracies = parse_output(output)
 
@@ -114,7 +126,7 @@ def main():
 
     rel_y_min, rel_y_max = float('inf'), float('-inf')
 
-    for cache_name in CACHES_TO_TEST:
+    for cache_name in caches_to_test:
         if cache_name not in all_results:
             continue
 
@@ -189,9 +201,18 @@ def main():
         percent_str = f"{percent:.4f}".rstrip('0').rstrip('.')
         return f"{percent_str}%\n({actual_size})"
 
+    all_fracs = [f for res in all_results.values() for f in res["fractions"] if f]
+    min_x_value = min(all_fracs) if all_fracs else 0
+    max_x_value = max(all_fracs) if all_fracs else 1
+    x_range = max_x_value - min_x_value
+    x_margin = x_range * 0.03 if x_range > 0 else 0.02
+
     for ax in (ax1, ax2):
-        ax.set_xlim(-max_x_value * 0.02, max_x_value * 1.02)
+        ax.set_xlim(min_x_value - x_margin, max_x_value + x_margin)
         ax.xaxis.set_major_formatter(ticker.FuncFormatter(custom_x_formatter))
+    # for ax in (ax1, ax2):
+    #     ax.set_xlim(-max_x_value * 0.02, max_x_value * 1.02)
+    #     ax.xaxis.set_major_formatter(ticker.FuncFormatter(custom_x_formatter))
 
         ax.minorticks_on()
         ax.grid(True, which='major', linestyle='-', linewidth=0.8, alpha=0.7)

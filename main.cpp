@@ -13,9 +13,7 @@
 #include "metrics.h"
 
 const double kMaxCacheFraction = 0.005;
-const size_t kMaxCacheSize = 5'000;
-const double kSizeMultiplier = 1.5;
-const size_t kTestsCount = 30;
+const double kMinCacheFraction = 0.0008;
 
 std::unordered_set<std::string> correct_cache_names = {
     "lru", "lfu", "lrfu", "arc", "lirs", "dlirs", "opt",
@@ -72,7 +70,8 @@ int main(int argc, char* argv[]) {
   auto dataset = ParseDataset(dataset_path);
   size_t dataset_size = GetDatasetSize(dataset);
   size_t max_size = std::ceil(dataset_size * kMaxCacheFraction);
-  auto testing_sizes = GenerateCacheSizes(4, max_size, 20);
+  size_t min_size = std::floor(dataset_size * kMinCacheFraction);
+  auto testing_sizes = GenerateCacheSizes(min_size, max_size, 20);
 
   for (auto size : testing_sizes) {
     double cache_fraction = double(size) / double(dataset_size);
@@ -110,10 +109,6 @@ int main(int argc, char* argv[]) {
 
     auto accuracy = m.GetAccuracy();
     std::cout << size << "\t" << cache_fraction << "\t" << accuracy << "\n";
-
-    // if (std::abs(accuracy - 1) < 0.000001) {
-    //   break;
-    // }
   }
   return 0;
 }
