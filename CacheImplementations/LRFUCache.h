@@ -16,7 +16,7 @@ class LRFUCache : public Cache<K> {
                                     lfu_cache_(size - (size / 2)) {
     if (size < 2) {
       throw std::runtime_error{
-          std::format("Too small size ({}) for cache", size)};
+          std::format("Too small size ({}) for LRFU cache", size)};
     }
   }
   virtual ~LRFUCache() = default;

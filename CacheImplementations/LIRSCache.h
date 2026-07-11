@@ -145,7 +145,7 @@ class LIRSCache : public Cache<K> {
 
     if (info_it == keys_info_.end() ||
         info_it->second.state == KeyState::DELETED) {
-      throw std::runtime_error{std::format("Key {} is not in cache", key)};
+      throw std::runtime_error{std::format("Key {} is not present", key)};
     }
     TouchInternal(info_it->first, info_it->second);
   }

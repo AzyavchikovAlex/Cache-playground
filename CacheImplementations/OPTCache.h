@@ -92,7 +92,7 @@ class OPTCache : public Cache<K> {
     }
   }
 
-  // not always inserts into cache!
+  // not always inserts into cache! (e.g., if the key is never touched in the future)
   void Insert(const K& key) override {
     TouchInternal(key);
   }
