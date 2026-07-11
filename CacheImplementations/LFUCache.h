@@ -9,61 +9,66 @@
 template<typename K>
 class LFUCache : public Cache<K> {
  private:
-
-  struct CounterInfo {
+  struct BucketInfo {
     int64_t frequency{0};
     std::list<K> keys;
   };
-  std::list<CounterInfo> counters_;
   struct KeyInfo {
-    typename std::list<CounterInfo>::iterator counter;
+    typename std::list<BucketInfo>::iterator bucket;
     typename std::list<K>::iterator position;
   };
+  std::list<BucketInfo> buckets_;
   std::unordered_map<K, KeyInfo> keys_info_;
-  int64_t zero_counter_{0};
+  int64_t zero_frequency_{0};
   size_t max_size_{0};
   size_t size_{0};
 
   void TouchInternal(auto info_it) {
     assert(info_it != keys_info_.end());
     auto& info = info_it->second;
-    int64_t new_frequency = info.counter->frequency + 1;
-    assert(new_frequency > zero_counter_);
+    int64_t new_frequency = info.bucket->frequency + 1;
+    assert(new_frequency > zero_frequency_);
 
-    auto insert_pos = std::next(info.counter);
-    if (insert_pos == counters_.end()
-        || insert_pos->frequency > new_frequency) {
-      insert_pos = counters_.insert(insert_pos, CounterInfo{
+    // create (if needed) next bucket and move to it
+    auto destination_bucket = std::next(info.bucket);
+    if (destination_bucket == buckets_.end() ||
+        destination_bucket->frequency > new_frequency) {
+      destination_bucket = buckets_.insert(destination_bucket, BucketInfo{
           .frequency = new_frequency,
           .keys = std::list<K>{},
       });
     }
-    insert_pos->keys.splice(insert_pos->keys.begin(),
-                            info.counter->keys,
-                            info.position);
-    if (info.counter->keys.empty()) {
-      counters_.erase(info.counter);
+    destination_bucket->keys.splice(destination_bucket->keys.begin(),
+                                    info.bucket->keys,
+                                    info.position);
+
+    // clear prev bucket if empty
+    if (info.bucket->keys.empty()) {
+      buckets_.erase(info.bucket);
     }
-    info.counter = insert_pos;
+    info.bucket = destination_bucket;
   }
 
  public:
   explicit LFUCache(size_t size) : max_size_(size) {
     if (size < 1) {
-      throw std::runtime_error{std::format("Too small size (= {})", size)};
+      throw std::runtime_error{
+          std::format("Too small size (= {}) for LFU cache", size)};
     }
   }
 
-  ~LFUCache() override = default;
-
   K EvictKey() {
-    assert(!counters_.empty() && !counters_.front().keys.empty());
+    if (size_ == 0) {
+      throw std::runtime_error{"Cannot evict key from empty cache"};
+    }
 
-    K evicted_key = counters_.front().keys.back();
-    zero_counter_ = std::max(zero_counter_, counters_.front().frequency);
-    counters_.front().keys.pop_back();
-    if (counters_.front().keys.empty()) {
-      counters_.pop_front();
+    auto& target_bucket = buckets_.front();
+    K evicted_key = target_bucket.keys.back();
+    // when searching for the key to the eviction, all frequencies should be lowered
+    zero_frequency_ = std::max(zero_frequency_, target_bucket.frequency);
+    target_bucket.keys.pop_back();
+    if (target_bucket.keys.empty()) {
+      buckets_.pop_front();
     }
     keys_info_.erase(evicted_key);
     --size_;
@@ -90,19 +95,19 @@ class LFUCache : public Cache<K> {
       return;
     }
 
-    auto counter_insert = [this, &key](auto insert_pos) {
-      if (insert_pos == counters_.end() ||
-          insert_pos->frequency > zero_counter_ + 1) {
-        insert_pos = counters_.insert(insert_pos, CounterInfo{
-            .frequency = zero_counter_ + 1,
+    auto bucket_insert = [this, &key](auto insert_pos) {
+      if (insert_pos == buckets_.end() ||
+          insert_pos->frequency > zero_frequency_ + 1) {
+        insert_pos = buckets_.insert(insert_pos, BucketInfo{
+            .frequency = zero_frequency_ + 1,
             .keys = std::list<K>{},
         });
       }
-      assert(insert_pos->frequency == zero_counter_ + 1);
+      assert(insert_pos->frequency == zero_frequency_ + 1);
 
       insert_pos->keys.push_front(key);
       keys_info_.insert({key, KeyInfo{
-          .counter = insert_pos,
+          .bucket = insert_pos,
           .position = insert_pos->keys.begin(),
       }});
       ++size_;
@@ -111,20 +116,21 @@ class LFUCache : public Cache<K> {
     if (Size() + 1 > max_size_) {
       EvictKey();
     }
-    if (counters_.empty() ||
-        counters_.front().frequency >= zero_counter_ + 1) {
-      counter_insert(counters_.begin());
+
+    if (!buckets_.empty() && buckets_.front().frequency <= zero_frequency_) {
+      assert(buckets_.front().frequency == zero_frequency_);
+      bucket_insert(std::next(buckets_.begin()));
     } else {
-      counter_insert(std::next(counters_.begin()));
+      bucket_insert(buckets_.begin());
     }
   }
 
   void Touch(const K& key) override {
     if (auto it = keys_info_.find(key); it != keys_info_.end()) {
       TouchInternal(it);
-      return;
+    } else {
+      throw std::runtime_error{std::format("Key {} is not present", key)};
     }
-    throw std::runtime_error{std::format("Key {} is not in cache", key)};
   }
 
   bool Contains(const K& key) const override {

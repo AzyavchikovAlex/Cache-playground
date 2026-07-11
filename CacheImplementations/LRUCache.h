@@ -87,7 +87,7 @@ class LRUCache : public Cache<K> {
     if (auto it = keys_positions_.find(key); it != keys_positions_.end()) {
       TouchKeyInternal(it);
     } else {
-      throw std::runtime_error{std::format("Key ({}) is not present", key)};
+      throw std::runtime_error{std::format("Key {} is not present", key)};
     }
   }
 
