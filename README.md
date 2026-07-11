@@ -91,6 +91,18 @@ $$Accuracy = \frac{\text{Total Keys} - \text{Unique Keys}}{\text{Cache Misses} -
 </table>
 
 
+<h2 align="center">Synthetic Dataset</h2>
+
+<table width="100%">
+  <tr>
+    <td width="100%"><img src="Datasets/graphics/all/multiple_sequential_scan-plot.png" width="100%"></td>
+  </tr>
+  <tr>
+    <td width="100%"><img src="Datasets/graphics/all/zig_zag_scan-plot.png" width="100%"></td>
+  </tr>
+</table>
+
+
 
 ### Plotting graphics
 Command to get one graphic (run from root of repository)
