@@ -88,6 +88,105 @@ $$Accuracy = \frac{\text{Total Keys} - \text{Unique Keys}}{\text{Cache Misses} -
   <tr>
     <td width="100%"><img src="Datasets/graphics/all/twitter-cluster020-plot.png" width="100%"></td>
   </tr>
+  <tr>
+    <td width="100%"><img src="Datasets/graphics/all/twitter-cluster022-plot.png" width="100%"></td>
+  </tr>
+  <tr>
+    <td width="100%"><img src="Datasets/graphics/all/twitter-cluster023-plot.png" width="100%"></td>
+  </tr>
+  <tr>
+    <td width="100%"><img src="Datasets/graphics/all/twitter-cluster024-plot.png" width="100%"></td>
+  </tr>
+  <tr>
+    <td width="100%"><img src="Datasets/graphics/all/twitter-cluster025-plot.png" width="100%"></td>
+  </tr>
+  <tr>
+    <td width="100%"><img src="Datasets/graphics/all/twitter-cluster026-plot.png" width="100%"></td>
+  </tr>
+  <tr>
+    <td width="100%"><img src="Datasets/graphics/all/twitter-cluster027-plot.png" width="100%"></td>
+  </tr>
+  <tr>
+    <td width="100%"><img src="Datasets/graphics/all/twitter-cluster028-plot.png" width="100%"></td>
+  </tr>
+  <tr>
+    <td width="100%"><img src="Datasets/graphics/all/twitter-cluster029-plot.png" width="100%"></td>
+  </tr>
+  <tr>
+    <td width="100%"><img src="Datasets/graphics/all/twitter-cluster030-plot.png" width="100%"></td>
+  </tr>
+  <tr>
+    <td width="100%"><img src="Datasets/graphics/all/twitter-cluster031-plot.png" width="100%"></td>
+  </tr>
+  <tr>
+    <td width="100%"><img src="Datasets/graphics/all/twitter-cluster032-plot.png" width="100%"></td>
+  </tr>
+  <tr>
+    <td width="100%"><img src="Datasets/graphics/all/twitter-cluster033-plot.png" width="100%"></td>
+  </tr>
+  <tr>
+    <td width="100%"><img src="Datasets/graphics/all/twitter-cluster034-plot.png" width="100%"></td>
+  </tr>
+  <tr>
+    <td width="100%"><img src="Datasets/graphics/all/twitter-cluster035-plot.png" width="100%"></td>
+  </tr>
+  <tr>
+    <td width="100%"><img src="Datasets/graphics/all/twitter-cluster036-plot.png" width="100%"></td>
+  </tr>
+  <tr>
+    <td width="100%"><img src="Datasets/graphics/all/twitter-cluster037-plot.png" width="100%"></td>
+  </tr>
+  <tr>
+    <td width="100%"><img src="Datasets/graphics/all/twitter-cluster038-plot.png" width="100%"></td>
+  </tr>
+  <tr>
+    <td width="100%"><img src="Datasets/graphics/all/twitter-cluster039-plot.png" width="100%"></td>
+  </tr>
+  <tr>
+    <td width="100%"><img src="Datasets/graphics/all/twitter-cluster040-plot.png" width="100%"></td>
+  </tr>
+  <tr>
+    <td width="100%"><img src="Datasets/graphics/all/twitter-cluster041-plot.png" width="100%"></td>
+  </tr>
+  <tr>
+    <td width="100%"><img src="Datasets/graphics/all/twitter-cluster042-plot.png" width="100%"></td>
+  </tr>
+  <tr>
+    <td width="100%"><img src="Datasets/graphics/all/twitter-cluster043-plot.png" width="100%"></td>
+  </tr>
+  <tr>
+    <td width="100%"><img src="Datasets/graphics/all/twitter-cluster044-plot.png" width="100%"></td>
+  </tr>
+  <tr>
+    <td width="100%"><img src="Datasets/graphics/all/twitter-cluster045-plot.png" width="100%"></td>
+  </tr>
+  <tr>
+    <td width="100%"><img src="Datasets/graphics/all/twitter-cluster046-plot.png" width="100%"></td>
+  </tr>
+  <tr>
+    <td width="100%"><img src="Datasets/graphics/all/twitter-cluster047-plot.png" width="100%"></td>
+  </tr>
+  <tr>
+    <td width="100%"><img src="Datasets/graphics/all/twitter-cluster048-plot.png" width="100%"></td>
+  </tr>
+  <tr>
+    <td width="100%"><img src="Datasets/graphics/all/twitter-cluster049-plot.png" width="100%"></td>
+  </tr>
+  <tr>
+    <td width="100%"><img src="Datasets/graphics/all/twitter-cluster050-plot.png" width="100%"></td>
+  </tr>
+  <tr>
+    <td width="100%"><img src="Datasets/graphics/all/twitter-cluster051-plot.png" width="100%"></td>
+  </tr>
+  <tr>
+    <td width="100%"><img src="Datasets/graphics/all/twitter-cluster052-plot.png" width="100%"></td>
+  </tr>
+  <tr>
+    <td width="100%"><img src="Datasets/graphics/all/twitter-cluster053-plot.png" width="100%"></td>
+  </tr>
+  <tr>
+    <td width="100%"><img src="Datasets/graphics/all/twitter-cluster054-plot.png" width="100%"></td>
+  </tr>
 </table>
 
 

@@ -87,10 +87,10 @@ def main():
     caches_to_test = [c.lower() for c in args.caches]
     if "opt" not in caches_to_test:
         caches_to_test.append("opt")
+    if "lru" not in caches_to_test:
+        caches_to_test.append("lru")
 
     all_results = {}
-
-
 
     for cache_name in caches_to_test:
         output = run_cpp_benchmark(executable_path, cache_name, test_file)
@@ -110,17 +110,21 @@ def main():
     if "opt" not in all_results:
         print("Внимание: Данные для OPT кеша отсутствуют. Сравнение невозможно.")
         return
+    if "lru" not in all_results:
+        print("Внимание: Данные для LRU кеша отсутствуют. Сравнение невозможно.")
+        return
 
     opt_data = all_results["opt"]
     opt_accuracy_map = {size: acc for size, acc in zip(opt_data["sizes"], opt_data["accuracies"])}
+
+    lru_data = all_results["lru"]
+    lru_accuracy_map = {size: acc for size, acc in zip(lru_data["sizes"], lru_data["accuracies"])}
 
     first_cache = list(all_results.values())[0]
     total_keys = (
         int(first_cache["sizes"][-1] / first_cache["fractions"][-1])
         if first_cache["fractions"][-1] > 0 else 1
     )
-
-    max_x_value = max([max(res["fractions"]) for res in all_results.values() if res["fractions"]])
 
     fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(16, 6), gridspec_kw={'wspace': 0.15})
 
@@ -137,27 +141,33 @@ def main():
 
         color = CACHE_COLORS.get(cache_name.lower(), DEFAULT_COLOR)
         is_opt = (cache_name.lower() == "opt")
+        is_lru = (cache_name.lower() == "lru")
 
-        # --- График 1: Абсолютная Accuracy ---
         ax1.plot(
             fracs, accs,
             marker="o", markersize=MARKER_SIZE, linewidth=LINE_WIDTH * (1.5 if is_opt else 1.0),
             linestyle="--" if is_opt else "-", color=color, label=f"{cache_name.upper()}"
         )
 
-        # --- График 2: Относительная Accuracy (в % от OPT) ---
         rel_accs = []
         valid_fracs = []
 
         for size, frac, acc in zip(sizes, fracs, accs):
-            if size in opt_accuracy_map:
+            if size in opt_accuracy_map and size in lru_accuracy_map:
                 opt_acc = opt_accuracy_map[size]
-                if opt_acc > 0:
-                    rel_acc = (acc / opt_acc) * 100.0
-                elif acc == 0 and opt_acc == 0:
-                    rel_acc = 100.0
+                lru_acc = lru_accuracy_map[size]
+
+                denominator = opt_acc - lru_acc
+
+                if denominator > 0:
+                    rel_acc = (acc - lru_acc) / denominator
                 else:
-                    continue
+                    if acc == lru_acc:
+                        rel_acc = 0.0
+                    elif acc < lru_acc:
+                        rel_acc = -1.0
+                    else:
+                        rel_acc = 1.0
 
                 rel_accs.append(rel_acc)
                 valid_fracs.append(frac)
@@ -165,11 +175,10 @@ def main():
         if rel_accs:
             ax2.plot(
                 valid_fracs, rel_accs,
-                marker="o", markersize=MARKER_SIZE, linewidth=LINE_WIDTH * (2.0 if is_opt else 1.0),
-                linestyle="--" if is_opt else "-", color=color, label=f"{cache_name.upper()}"
+                marker="o", markersize=MARKER_SIZE, linewidth=LINE_WIDTH * (2.0 if is_opt or is_lru else 1.0),
+                linestyle="--" if is_opt or is_lru else "-", color=color, label=f"{cache_name.upper()}"
             )
 
-            # Ищем минимум и максимум для масштабирования (включая OPT, чтобы 100% всегда было в кадре)
             rel_y_min = min(rel_y_min, min(rel_accs))
             rel_y_max = max(rel_y_max, max(rel_accs))
 
@@ -181,13 +190,15 @@ def main():
     ax1.set_title("Overall Accuracy", fontsize=13)
     ax1.set_ylabel("Accuracy", fontsize=12, fontweight="bold")
 
-    ax2.set_title("Accuracy Relative to OPT Cache", fontsize=13)
-    ax2.set_ylabel("Compliance with OPT (%)", fontsize=12, fontweight="bold")
+    ax2.set_title("Normalized Performance (LRU = 0, OPT = 1)", fontsize=13)
+    ax2.set_ylabel("Score relative to LRU & OPT", fontsize=12, fontweight="bold")
 
-    # Масштабирование правого графика (под данные, не с нуля)
+    ax2.axhline(0, color='black', linestyle='-', linewidth=1, alpha=0.3)
+    ax2.axhline(1, color='black', linestyle='-', linewidth=1, alpha=0.3)
+
     if rel_y_min != float('inf') and rel_y_max != float('-inf'):
         y_range = rel_y_max - rel_y_min
-        margin = y_range * 0.05 if y_range > 0 else 1.0
+        margin = y_range * 0.05 if y_range > 0 else 0.1
         ax2.set_ylim(rel_y_min - margin, rel_y_max + margin)
 
     fig.supxlabel("Cache fraction (size)", fontsize=14, fontweight="bold", y=0.02)
@@ -210,9 +221,6 @@ def main():
     for ax in (ax1, ax2):
         ax.set_xlim(min_x_value - x_margin, max_x_value + x_margin)
         ax.xaxis.set_major_formatter(ticker.FuncFormatter(custom_x_formatter))
-    # for ax in (ax1, ax2):
-    #     ax.set_xlim(-max_x_value * 0.02, max_x_value * 1.02)
-    #     ax.xaxis.set_major_formatter(ticker.FuncFormatter(custom_x_formatter))
 
         ax.minorticks_on()
         ax.grid(True, which='major', linestyle='-', linewidth=0.8, alpha=0.7)

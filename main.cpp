@@ -12,7 +12,7 @@
 #include "Datasets/dataset_parser.h"
 #include "metrics.h"
 
-const double kMaxCacheFraction = 0.005;
+const double kMaxCacheFraction = 0.02;
 const double kMinCacheFraction = 0.0008;
 
 std::unordered_set<std::string> correct_cache_names = {

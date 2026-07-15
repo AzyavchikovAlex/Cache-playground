@@ -6,7 +6,7 @@ EXECUTABLE="./cmake-build-debug/Cache"
 
 # twitter dataset
 DATA_DIR="./Datasets/2_twitter"
-for i in {001..020}; do
+for i in {001..020} {022..054}; do
     python3 "$SCRIPT" \
       --dataset="$DATA_DIR/cluster$i-parsed.txt" \
       --plot="$GRAPHICS_DIR/twitter-cluster$i-plot.png" \
