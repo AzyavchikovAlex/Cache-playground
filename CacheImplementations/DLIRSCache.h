@@ -12,9 +12,11 @@
 template<typename K>
 class DLIRSCache : public Cache<K> {
  private:
+  static constexpr size_t kMaxHistorySizeRatio{2};
   size_t max_hir_keys_count_{0};
   size_t max_lir_keys_count_{0};
   size_t lir_keys_count_{0};
+  const size_t max_history_size;
   enum class KeyState {
     LIR, // Low Inter-reference Recency
     HIR, // High Inter-reference Recency
@@ -26,11 +28,13 @@ class DLIRSCache : public Cache<K> {
     KeyState state;
     std::optional<typename std::list<K>::iterator> stack_it;
     std::optional<typename std::list<K>::iterator> queue_it;
+    std::optional<typename std::list<K>::iterator> deleted_queue_it;
   };
 
   std::unordered_map<K, KeyInfo> keys_info_;
   std::list<K> hir_queue_;
   std::list<K> lir_stack_;
+  std::list<K> deleted_keys_;
 
  private:
   void PruneQueue() {
@@ -44,12 +48,16 @@ class DLIRSCache : public Cache<K> {
 
       if (!info.stack_it.has_value()) {
         keys_info_.erase(info_it);
+      } else {
+        deleted_keys_.push_front(key);
+        info.deleted_queue_it = deleted_keys_.begin();
       }
     }
   }
 
   // may insert too much values to queue
   void PruneStack() {
+    // cut tail
     while (!lir_stack_.empty()) {
       auto info_it = keys_info_.find(lir_stack_.back());
       auto& [key, info] = *info_it;
@@ -72,8 +80,26 @@ class DLIRSCache : public Cache<K> {
         assert(info.queue_it.has_value());
       } else if (info.state == KeyState::DELETED) {
         assert(info.queue_it == std::nullopt);
+        assert(info.deleted_queue_it.has_value());
+        deleted_keys_.erase(info.deleted_queue_it.value());
         keys_info_.erase(info_it);
       }
+    }
+
+    // remove deleted
+    while (keys_info_.size() > max_history_size) {
+      assert(!deleted_keys_.empty());
+      K oldest_deleted_key = deleted_keys_.back();
+      deleted_keys_.pop_back();
+
+      auto info_it = keys_info_.find(oldest_deleted_key);
+      assert(info_it != keys_info_.end());
+      auto& info = info_it->second;
+      assert(info.queue_it == std::nullopt);
+      assert(info.stack_it.has_value());
+      lir_stack_.erase(info.stack_it.value());
+
+      keys_info_.erase(info_it);
     }
   }
 
@@ -106,8 +132,14 @@ class DLIRSCache : public Cache<K> {
     RebalanceSizes(info.state);
 
     if (was_in_stack && info.state != KeyState::LIR) {
+      if (info.state == KeyState::DELETED) {
+        deleted_keys_.erase(info.deleted_queue_it.value());
+        info.deleted_queue_it = std::nullopt;
+      }
       info.state = KeyState::LIR;
       ++lir_keys_count_;
+    } else if (!was_in_stack && info.state == KeyState::HIR_FROM_LIR) {
+      info.state = KeyState::HIR;
     }
 
     if (info.queue_it.has_value()) {
@@ -115,7 +147,9 @@ class DLIRSCache : public Cache<K> {
         hir_queue_.erase(info.queue_it.value());
         info.queue_it = std::nullopt;
       } else {
-        hir_queue_.splice(hir_queue_.begin(), hir_queue_, info.queue_it.value());
+        hir_queue_.splice(hir_queue_.begin(),
+                          hir_queue_,
+                          info.queue_it.value());
       }
     }
 
@@ -129,7 +163,8 @@ class DLIRSCache : public Cache<K> {
  public:
   explicit DLIRSCache(size_t size) :
       max_hir_keys_count_(std::max(size_t(1), size_t(size * 0.1))),
-      max_lir_keys_count_(size - max_hir_keys_count_) {
+      max_lir_keys_count_(size - max_hir_keys_count_),
+      max_history_size(kMaxHistorySizeRatio * size) {
     if (size < 2) {
       throw std::runtime_error{
           std::format("Too small (= {}) size for DLIRSCache cache", size)};
@@ -156,6 +191,7 @@ class DLIRSCache : public Cache<K> {
     info.state = KeyState::HIR;
     hir_queue_.push_front(key);
     info.queue_it = hir_queue_.begin();
+    PruneStack();
     PruneQueue();
   }
 

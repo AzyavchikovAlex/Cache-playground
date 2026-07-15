@@ -10,7 +10,7 @@ for i in {001..020}; do
       --dataset="$DATA_DIR/cluster$i-parsed.txt" \
       --plot="$GRAPHICS_DIR/twitter-cluster$i-plot.png" \
       --executable="$EXECUTABLE" \
-      --cache opt lru lirs dlirs arc&
+      --cache opt lru lirs dlirs arc &
 done
 
 wait
