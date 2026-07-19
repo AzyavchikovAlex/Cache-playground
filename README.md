@@ -14,6 +14,7 @@ A project designed to analyze and visualize the performance of various caching a
 * **LIRS cache**: a cache based on the [Low Inter-reference Recency Set replacement policy](https://ranger.uta.edu/~sjiang/pubs/papers/jiang02_LIRS.pdf)
 * **DLIRS cache**: dynamic LIRS cache ([DLIRS: Improving Low Inter-Reference Recency Set
   Cache Replacement Policy with Dynamics](https://www.systor.org/2018/pdf/systor18-4.pdf))
+* **LIRS2 cache**: [an Improved LIRS Replacement Algorithm](https://ranger.uta.edu/~sjiang/pubs/papers/zhong21-LIRS2.pdf)
 * **OPT cache**: an offline, theoretically optimal cache algorithm used as a baseline
 
 ### Efficiency Metrics
