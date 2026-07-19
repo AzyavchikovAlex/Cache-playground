@@ -5,7 +5,7 @@ import sys
 import matplotlib.pyplot as plt
 import matplotlib.ticker as ticker
 
-DEFAULT_CACHES = ["opt", "lru", "lfu", "lrfu", "arc", "lirs", "dlirs"]
+DEFAULT_CACHES = ["opt", "lru", "lfu", "lrfu", "arc", "lirs", "dlirs", "lirs2"]
 
 CACHE_COLORS = {
     "opt": "#404040",    # Темно-серый
@@ -14,6 +14,7 @@ CACHE_COLORS = {
     "lrfu": "#d62728",   # Красный
     "arc": "#9467bd",    # Фиолетовый
     "lirs": "#ff7f0e",   # Оранжевый
+    "lirs2": "#ffbb78",  # Светло-Оранжевый
     "dlirs": "#e377c2",  # Розовый
 }
 DEFAULT_COLOR = "#7f7f7f"

@@ -7,6 +7,7 @@
 #include "CacheImplementations/LRFUCache.h"
 #include "CacheImplementations/adaptive_replacement_cache.h"
 #include "CacheImplementations/LIRSCache.h"
+#include "CacheImplementations/LIRS2Cache.h"
 #include "CacheImplementations/DLIRSCache.h"
 #include "CacheImplementations/OPTCache.h"
 #include "Datasets/dataset_parser.h"
@@ -16,7 +17,7 @@ const double kMaxCacheFraction = 0.02;
 const double kMinCacheFraction = 0.0008;
 
 std::unordered_set<std::string> correct_cache_names = {
-    "lru", "lfu", "lrfu", "arc", "lirs", "dlirs", "opt",
+    "lru", "lfu", "lrfu", "arc", "lirs", "dlirs", "lirs2", "opt",
 };
 
 std::vector<size_t> GenerateCacheSizes(size_t min_size,
@@ -93,6 +94,8 @@ int main(int argc, char* argv[]) {
             return std::shared_ptr<LIRSCache<T>>(new LIRSCache<T>(size));
           } else if (cache_name == "dlirs") {
             return std::shared_ptr<DLIRSCache<T>>(new DLIRSCache<T>(size));
+          } else if (cache_name == "lirs2") {
+            return std::shared_ptr<LIRS2Cache<T>>(new LIRS2Cache<T>(size));
           } else if (cache_name == "opt") {
             try {
               auto& dataset = std::get<Dataset<T>>(any_dataset);
