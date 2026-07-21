@@ -5,17 +5,19 @@ import sys
 import matplotlib.pyplot as plt
 import matplotlib.ticker as ticker
 
-DEFAULT_CACHES = ["opt", "lru", "lfu", "lrfu", "arc", "lirs", "dlirs", "lirs2"]
+DEFAULT_CACHES = ["opt", "lru", "lfu", "lrfu", "arc", "lirs", "dlirs", "lirs2",
+                  "adapt-lirs2-lru"]
 
 CACHE_COLORS = {
-    "opt": "#404040",    # Темно-серый
-    "lru": "#1f77b4",    # Синий
-    "lfu": "#2ca02c",    # Зеленый
-    "lrfu": "#d62728",   # Красный
-    "arc": "#9467bd",    # Фиолетовый
-    "lirs": "#ff7f0e",   # Оранжевый
+    "opt": "#404040",  # Темно-серый
+    "lru": "#1f77b4",  # Синий
+    "lfu": "#2ca02c",  # Зеленый
+    "lrfu": "#d62728",  # Красный
+    "arc": "#9467bd",  # Фиолетовый
+    "lirs": "#ff7f0e",  # Оранжевый
     "lirs2": "#ffbb78",  # Светло-Оранжевый
     "dlirs": "#e377c2",  # Розовый
+    "adapt-lirs2-lru": "#17becf"  # Голубой
 }
 DEFAULT_COLOR = "#7f7f7f"
 
@@ -24,7 +26,8 @@ MARKER_SIZE = 2.5
 
 
 def parse_arguments():
-    parser = argparse.ArgumentParser(description="Бенчмарк кешей: Accuracy и сравнение с OPT.")
+    parser = argparse.ArgumentParser(
+        description="Бенчмарк кешей: Accuracy и сравнение с OPT.")
     parser.add_argument(
         "-e", "--executable", type=str,
         default="./cmake-build-debug/Cache",
@@ -58,11 +61,13 @@ def run_cpp_benchmark(executable_path, cache_name, dataset_path):
         )
         return result.stdout
     except subprocess.CalledProcessError as e:
-        print(f"Ошибка при выполнении C++ кода для {cache_name}!", file=sys.stderr)
+        print(f"Ошибка при выполнении C++ кода для {cache_name}!",
+              file=sys.stderr)
         print(e.stderr, file=sys.stderr)
         sys.exit(1)
     except FileNotFoundError:
-        print(f"Файл {executable_path} не найден. Проверьте путь.", file=sys.stderr)
+        print(f"Файл {executable_path} не найден. Проверьте путь.",
+              file=sys.stderr)
         sys.exit(1)
 
 
@@ -109,17 +114,21 @@ def main():
         return
 
     if "opt" not in all_results:
-        print("Внимание: Данные для OPT кеша отсутствуют. Сравнение невозможно.")
+        print(
+            "Внимание: Данные для OPT кеша отсутствуют. Сравнение невозможно.")
         return
     if "lru" not in all_results:
-        print("Внимание: Данные для LRU кеша отсутствуют. Сравнение невозможно.")
+        print(
+            "Внимание: Данные для LRU кеша отсутствуют. Сравнение невозможно.")
         return
 
     opt_data = all_results["opt"]
-    opt_accuracy_map = {size: acc for size, acc in zip(opt_data["sizes"], opt_data["accuracies"])}
+    opt_accuracy_map = {size: acc for size, acc in
+                        zip(opt_data["sizes"], opt_data["accuracies"])}
 
     lru_data = all_results["lru"]
-    lru_accuracy_map = {size: acc for size, acc in zip(lru_data["sizes"], lru_data["accuracies"])}
+    lru_accuracy_map = {size: acc for size, acc in
+                        zip(lru_data["sizes"], lru_data["accuracies"])}
 
     first_cache = list(all_results.values())[0]
     total_keys = (
@@ -127,7 +136,8 @@ def main():
         if first_cache["fractions"][-1] > 0 else 1
     )
 
-    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(16, 6), gridspec_kw={'wspace': 0.15})
+    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(16, 6),
+                                   gridspec_kw={'wspace': 0.15})
 
     rel_y_min, rel_y_max = float('inf'), float('-inf')
 
@@ -146,8 +156,10 @@ def main():
 
         ax1.plot(
             fracs, accs,
-            marker="o", markersize=MARKER_SIZE, linewidth=LINE_WIDTH * (1.5 if is_opt else 1.0),
-            linestyle="--" if is_opt else "-", color=color, label=f"{cache_name.upper()}"
+            marker="o", markersize=MARKER_SIZE,
+            linewidth=LINE_WIDTH * (1.5 if is_opt else 1.0),
+            linestyle="--" if is_opt else "-", color=color,
+            label=f"{cache_name.upper()}"
         )
 
         rel_accs = []
@@ -176,13 +188,14 @@ def main():
         if rel_accs:
             ax2.plot(
                 valid_fracs, rel_accs,
-                marker="o", markersize=MARKER_SIZE, linewidth=LINE_WIDTH * (2.0 if is_opt or is_lru else 1.0),
-                linestyle="--" if is_opt or is_lru else "-", color=color, label=f"{cache_name.upper()}"
+                marker="o", markersize=MARKER_SIZE,
+                linewidth=LINE_WIDTH * (2.0 if is_opt or is_lru else 1.0),
+                linestyle="--" if is_opt or is_lru else "-", color=color,
+                label=f"{cache_name.upper()}"
             )
 
             rel_y_min = min(rel_y_min, min(rel_accs))
             rel_y_max = max(rel_y_max, max(rel_accs))
-
 
     dataset_basename = os.path.basename(test_file)
     dataset_title, _ = os.path.splitext(dataset_basename)
@@ -192,7 +205,8 @@ def main():
     ax1.set_ylabel("Accuracy", fontsize=12, fontweight="bold")
 
     ax2.set_title("Normalized Performance (LRU = 0, OPT = 1)", fontsize=13)
-    ax2.set_ylabel("Score relative to LRU & OPT", fontsize=12, fontweight="bold")
+    ax2.set_ylabel("Score relative to LRU & OPT", fontsize=12,
+                   fontweight="bold")
 
     ax2.axhline(0, color='black', linestyle='-', linewidth=1, alpha=0.3)
     ax2.axhline(1, color='black', linestyle='-', linewidth=1, alpha=0.3)
@@ -202,7 +216,8 @@ def main():
         margin = y_range * 0.05 if y_range > 0 else 0.1
         ax2.set_ylim(rel_y_min - margin, rel_y_max + margin)
 
-    fig.supxlabel("Cache fraction (size)", fontsize=14, fontweight="bold", y=0.02)
+    fig.supxlabel("Cache fraction (size)", fontsize=14, fontweight="bold",
+                  y=0.02)
 
     def custom_x_formatter(x, pos):
         if x < 0: return ""
@@ -213,7 +228,8 @@ def main():
         percent_str = f"{percent:.4f}".rstrip('0').rstrip('.')
         return f"{percent_str}%\n({actual_size})"
 
-    all_fracs = [f for res in all_results.values() for f in res["fractions"] if f]
+    all_fracs = [f for res in all_results.values() for f in res["fractions"] if
+                 f]
     min_x_value = min(all_fracs) if all_fracs else 0
     max_x_value = max(all_fracs) if all_fracs else 1
     x_range = max_x_value - min_x_value
@@ -233,6 +249,7 @@ def main():
     plt.savefig(args.plot, dpi=300, bbox_inches="tight", pad_inches=0.05)
     print(f"График успешно сохранен в файл '{args.plot}'")
     plt.show()
+
 
 if __name__ == "__main__":
     main()

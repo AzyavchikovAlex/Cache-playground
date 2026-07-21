@@ -10,6 +10,7 @@
 #include "CacheImplementations/LIRS2Cache.h"
 #include "CacheImplementations/DLIRSCache.h"
 #include "CacheImplementations/OPTCache.h"
+#include "CacheImplementations/AdaptCache.h"
 #include "Datasets/dataset_parser.h"
 #include "metrics.h"
 
@@ -17,7 +18,7 @@ const double kMaxCacheFraction = 0.02;
 const double kMinCacheFraction = 0.0008;
 
 std::unordered_set<std::string> correct_cache_names = {
-    "lru", "lfu", "lrfu", "arc", "lirs", "dlirs", "lirs2", "opt",
+    "lru", "lfu", "lrfu", "arc", "lirs", "dlirs", "lirs2", "opt", "adapt-lirs2-lru",
 };
 
 std::vector<size_t> GenerateCacheSizes(size_t min_size,
@@ -96,6 +97,10 @@ int main(int argc, char* argv[]) {
             return std::shared_ptr<DLIRSCache<T>>(new DLIRSCache<T>(size));
           } else if (cache_name == "lirs2") {
             return std::shared_ptr<LIRS2Cache<T>>(new LIRS2Cache<T>(size));
+          } else if (cache_name == "adapt-lirs2-lru") {
+            auto lru = std::shared_ptr<LRUPolicy<int64_t>>(new LRUPolicy<int64_t>(size));
+            auto lirs2 = std::shared_ptr<LIRS2Policy<int64_t>>(new LIRS2Policy<int64_t>(size));
+            return std::shared_ptr<NewCache<int64_t>>(new AdaptCache<int64_t>({lirs2, lru}, size));
           } else if (cache_name == "opt") {
             try {
               auto& dataset = std::get<Dataset<T>>(any_dataset);

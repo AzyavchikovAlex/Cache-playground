@@ -21,6 +21,15 @@ struct CacheMetrics {
   }
 };
 
+template <typename T>
+struct is_new_cache : std::false_type {};
+
+template <typename... Args>
+struct is_new_cache<NewCache<Args...>> : std::true_type {};
+
+template <typename T>
+inline constexpr bool is_new_cache_v = is_new_cache<T>::value;
+
 template<typename CacheFactory>
 CacheMetrics MeasureCache(const AnyDataset& any_dataset,
                           CacheFactory& create_cache) {
@@ -41,12 +50,22 @@ CacheMetrics MeasureCache(const AnyDataset& any_dataset,
             perfect_cache.insert(key);
           }
 
-          if (cache->Contains(key)) {
-            cache->Touch(key);
+          // TODO: refactor for standard approach
+          using cache_t = typename std::decay_t<decltype(cache)>::element_type;
+          if constexpr (is_new_cache_v<cache_t>) {
+            if (!cache->Get(key)) {
+              metrics.cache_misses += 1;
+              cache->Set(key);
+            }
           } else {
-            metrics.cache_misses += 1;
-            cache->Insert(key);
+            if (cache->Contains(key)) {
+              cache->Touch(key);
+            } else {
+              metrics.cache_misses += 1;
+              cache->Insert(key);
+            }
           }
+
         }
       } else {
         throw std::runtime_error(
