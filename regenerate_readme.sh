@@ -2,7 +2,7 @@
 
 GRAPHICS_DIR="./Datasets/graphics/all"
 SCRIPT="./plot_metrics.py"
-EXECUTABLE="./cmake-build-debug/Cache"
+EXECUTABLE="./cmake-build-release/Cache"
 
 # twitter dataset
 DATA_DIR="./Datasets/2_twitter"
